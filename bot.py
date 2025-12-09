@@ -12,12 +12,23 @@ bot = Bot(token=BOT_TOKEN)
 # دریافت قیمت‌ها
 # -----------------------------
 def get_prices():
-    # قیمت تتر از Exir (پایدار و بدون بلاک)
+    # تلاش برای دریافت قیمت تتر با پروکسی
     try:
-        r = requests.get("https://api.exir.io/v1/ticker/usdt-irt", timeout=10).json()
+        url = "https://api.allorigins.win/raw?url=https://api.exir.io/v1/ticker/usdt-irt"
+        r = requests.get(url, timeout=10).json()
         usdt_toman = int(r["last"])
     except:
         usdt_toman = None
+
+    # قیمت انس جهانی طلا (XAU/USD)
+    try:
+        gold = requests.get(
+            "https://api.binance.com/api/v3/ticker/price?symbol=XAUUSD",
+            timeout=10
+        ).json()
+        gold_price = float(gold["price"])
+    except:
+        gold_price = None
 
     # قیمت ارزهای دیجیتال از بایننس
     symbols = [
@@ -35,13 +46,13 @@ def get_prices():
         except:
             crypto_prices[sym.replace("USDT", "")] = None
 
-    return usdt_toman, crypto_prices
+    return usdt_toman, gold_price, crypto_prices
 
 # -----------------------------
 # ساخت پیام
 # -----------------------------
 def build_message():
-    usdt_toman, crypto = get_prices()
+    usdt_toman, gold_price, crypto = get_prices()
 
     msg = "📊 آپدیت روزانه قیمت‌ها\n\n"
 
@@ -49,7 +60,13 @@ def build_message():
     if usdt_toman:
         msg += f"💵 تتر (USDT): {usdt_toman:,} تومان\n\n"
     else:
-        msg += "💵 تتر (USDT): ❌\n\n"
+        msg += "💵 تتر (USDT): ❌ (دریافت نشد)\n\n"
+
+    # انس جهانی طلا
+    if gold_price:
+        msg += f"🥇 انس جهانی طلا: {gold_price:.2f} دلار\n\n"
+    else:
+        msg += "🥇 انس جهانی طلا: ❌\n\n"
 
     # قیمت ارزها
     msg += "💠 ارزهای دیجیتال (دلاری):\n"

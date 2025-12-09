@@ -1,4 +1,3 @@
-python
 import requests
 import schedule
 import time
@@ -9,20 +8,14 @@ CHANNEL_ID = "@VeeWoStore"
 
 bot = Bot(token=BOT_TOKEN)
 
------------------------------
-
-دریافت قیمت‌ها
-
------------------------------
+# دریافت قیمت‌ها
 def get_prices():
-    # قیمت دلار به تومان از نوبیتکس
     try:
         r = requests.get("https://api.nobitex.ir/v2/orderbook/USDTIRT").json()
         usdt_toman = int(r["lastTradePrice"])
     except:
         usdt_toman = None
 
-    # لیست ارزها
     symbols = [
         "BTCUSDT", "ETHUSDT", "SOLUSDT", "TONUSDT",
         "SUIUSDT", "BNBUSDT", "TRXUSDT", "XRPUSDT"
@@ -38,16 +31,11 @@ def get_prices():
         except:
             crypto_prices[sym.replace("USDT", "")] = None
 
-    return usdttoman, cryptoprices
+    return usdt_toman, crypto_prices
 
-
------------------------------
-
-ساخت پیام خوش‌فرم
-
------------------------------
+# ساخت پیام خوش‌فرم
 def build_message():
-    usdttoman, crypto = getprices()
+    usdt_toman, crypto = get_prices()
 
     msg = "📊 آپدیت روزانه قیمت‌ها\n\n"
 
@@ -61,33 +49,22 @@ def build_message():
         else:
             msg += f"• {k}: ❌\n"
 
-    msg += "\n⏱️ آپدیت خودکار هر ۲۴ ساعت"
+    msg += "\n⏱ آپدیت خودکار هر ۲۴ ساعت"
 
     return msg
 
-
------------------------------
-
-ارسال پیام در کانال
-
------------------------------
+# ارسال پیام در کانال
 def send_update():
     message = build_message()
-    bot.sendmessage(chatid=CHANNELID, text=message, parsemode="Markdown")
+    bot.send_message(chat_id=CHANNEL_ID, text=message, parse_mode="Markdown")
 
-
------------------------------
-
-زمان‌بندی ۲۴ ساعته
-
------------------------------
+# زمان‌بندی ۲۴ ساعته
 schedule.every(24).hours.do(send_update)
 
 print("Bot is running...")
 
-send_update()  # اولین پیام بلافاصله ارسال شود
+send_update()  # ارسال اولین پیام
 
 while True:
     schedule.run_pending()
     time.sleep(1)
-

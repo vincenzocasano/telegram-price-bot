@@ -1,6 +1,7 @@
 import requests
 import schedule
 import time
+from datetime import datetime
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 
 BOT_TOKEN = "8016783825:AAEA3W83-Ig9SED9uJHtmt10RFVWdMXeHeQ"
@@ -9,28 +10,9 @@ CHANNEL_ID = "@VeeWoStore"
 bot = Bot(token=BOT_TOKEN)
 
 # -----------------------------
-# دریافت قیمت‌ها
+# دریافت قیمت رمز ارزها
 # -----------------------------
-def get_prices():
-    # تلاش برای دریافت قیمت تتر با پروکسی
-    try:
-        url = "https://api.allorigins.win/raw?url=https://api.exir.io/v1/ticker/usdt-irt"
-        r = requests.get(url, timeout=10).json()
-        usdt_toman = int(r["last"])
-    except:
-        usdt_toman = None
-
-    # قیمت انس جهانی طلا (XAU/USD)
-    try:
-        gold = requests.get(
-            "https://api.binance.com/api/v3/ticker/price?symbol=XAUUSD",
-            timeout=10
-        ).json()
-        gold_price = float(gold["price"])
-    except:
-        gold_price = None
-
-    # قیمت ارزهای دیجیتال از بایننس
+def get_crypto_prices():
     symbols = [
         "BTCUSDT", "ETHUSDT", "SOLUSDT", "TONUSDT",
         "SUIUSDT", "BNBUSDT", "TRXUSDT", "XRPUSDT"
@@ -46,30 +28,21 @@ def get_prices():
         except:
             crypto_prices[sym.replace("USDT", "")] = None
 
-    return usdt_toman, gold_price, crypto_prices
+    return crypto_prices
 
 # -----------------------------
 # ساخت پیام
 # -----------------------------
 def build_message():
-    usdt_toman, gold_price, crypto = get_prices()
+    crypto = get_crypto_prices()
 
-    msg = "📊 آپدیت روزانه قیمت‌ها\n\n"
+    # تاریخ و ساعت
+    now = datetime.now().strftime("%Y/%m/%d - %H:%M")
 
-    # قیمت تتر
-    if usdt_toman:
-        msg += f"💵 تتر (USDT): {usdt_toman:,} تومان\n\n"
-    else:
-        msg += "💵 تتر (USDT): ❌ (دریافت نشد)\n\n"
+    msg = f"📊 آپدیت قیمت رمز‌ارزها\n"
+    msg += f"📅 تاریخ: {now}\n\n"
 
-    # انس جهانی طلا
-    if gold_price:
-        msg += f"🥇 انس جهانی طلا: {gold_price:.2f} دلار\n\n"
-    else:
-        msg += "🥇 انس جهانی طلا: ❌\n\n"
-
-    # قیمت ارزها
-    msg += "💠 ارزهای دیجیتال (دلاری):\n"
+    msg += "💠 قیمت‌ها (دلاری):\n"
     for k, v in crypto.items():
         if v:
             msg += f"• {k}: {v:.2f} $\n"

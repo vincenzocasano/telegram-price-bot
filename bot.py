@@ -12,23 +12,11 @@ bot = Bot(token=BOT_TOKEN)
 # دریافت قیمت‌ها
 # -----------------------------
 def get_prices():
-    usdt_toman = None
-
-    # قیمت تتر به تومان از نوبیتکس
+    # قیمت تتر از Tetherland (پایدار و بدون بلاک)
     try:
-        r = requests.get("https://api.nobitex.ir/v2/orderbook/USDTIRT", timeout=10)
-        data = r.json()
-        # لاگ ساختار دریافتی
-        print("Nobitex response:", data)
-
-        # حالت کلاسیک نوبیتکس: data["lastTradePrice"]
-        if "lastTradePrice" in data:
-            usdt_toman = int(float(data["lastTradePrice"]))
-        # بعضی نسخه‌ها توی result هستند
-        elif "result" in data and "lastTradePrice" in data["result"]:
-            usdt_toman = int(float(data["result"]["lastTradePrice"]))
-    except Exception as e:
-        print("Error fetching USDTIRT from Nobitex:", e)
+        r = requests.get("https://api.tetherland.com/currencies", timeout=10).json()
+        usdt_toman = int(r["USDT"]["price"])
+    except:
         usdt_toman = None
 
     # قیمت ارزهای دیجیتال از بایننس
@@ -44,14 +32,13 @@ def get_prices():
             url = f"https://api.binance.com/api/v3/ticker/price?symbol={sym}"
             data = requests.get(url, timeout=10).json()
             crypto_prices[sym.replace("USDT", "")] = float(data["price"])
-        except Exception as e:
-            print(f"Error fetching {sym} from Binance:", e)
+        except:
             crypto_prices[sym.replace("USDT", "")] = None
 
     return usdt_toman, crypto_prices
 
 # -----------------------------
-# ساخت پیام خوش‌فرم
+# ساخت پیام
 # -----------------------------
 def build_message():
     usdt_toman, crypto = get_prices()
@@ -59,15 +46,15 @@ def build_message():
     msg = "📊 آپدیت روزانه قیمت‌ها\n\n"
 
     # قیمت تتر
-    if usdt_toman is not None:
+    if usdt_toman:
         msg += f"💵 تتر (USDT): {usdt_toman:,} تومان\n\n"
     else:
-        msg += "💵 تتر (USDT): ❌ (خطا در دریافت)\n\n"
+        msg += "💵 تتر (USDT): ❌\n\n"
 
     # قیمت ارزها
     msg += "💠 ارزهای دیجیتال (دلاری):\n"
     for k, v in crypto.items():
-        if v is not None:
+        if v:
             msg += f"• {k}: {v:.2f} $\n"
         else:
             msg += f"• {k}: ❌\n"
@@ -95,13 +82,13 @@ def send_update():
     )
 
 # -----------------------------
-# زمان‌بندی ۲۴ ساعته
+# زمان‌بندی
 # -----------------------------
 schedule.every(24).hours.do(send_update)
 
 print("Bot is running...")
 
-send_update()  # اولین پیام
+send_update()
 
 while True:
     schedule.run_pending()

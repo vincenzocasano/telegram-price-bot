@@ -12,10 +12,10 @@ bot = Bot(token=BOT_TOKEN)
 # دریافت قیمت‌ها
 # -----------------------------
 def get_prices():
-    # قیمت تتر از Tetherland (پایدار و بدون بلاک)
+    # قیمت تتر از Exir (پایدار و بدون بلاک)
     try:
-        r = requests.get("https://api.tetherland.com/currencies", timeout=10).json()
-        usdt_toman = int(r["USDT"]["price"])
+        r = requests.get("https://api.exir.io/v1/ticker/usdt-irt", timeout=10).json()
+        usdt_toman = int(r["last"])
     except:
         usdt_toman = None
 
